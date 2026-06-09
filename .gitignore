@@ -1,1 +1,43 @@
 
+# Dependencies
+node_modules/
+.expo/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Secrets / keys
+*.pt
+*.pth
+*.key
+*.pem
+
+# Build output
+dist/
+build/
+.next/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker volumes
+postgres_data/
