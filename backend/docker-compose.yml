@@ -1,1 +1,41 @@
 
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dermatrace
+      POSTGRES_USER: dermatrace
+      POSTGRES_PASSWORD: dermatrace
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dermatrace"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://dermatrace:dermatrace@postgres:5432/dermatrace
+      SECRET_KEY: dev-secret-key-change-in-production
+      ENVIRONMENT: development
+      CORS_ORIGINS: '["http://localhost:19006","http://localhost:8081","exp://localhost:8081"]'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./scripts:/app/scripts
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
