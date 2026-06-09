@@ -1,1 +1,31 @@
 
+{
+  "expo": {
+    "name": "DermTrace",
+    "slug": "dermatrace",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#FDFAF6"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.dermatrace.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FDFAF6"
+      },
+      "package": "app.dermatrace.mobile"
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-image-picker"
+    ],
+    "extra": {
+      "apiUrl": "http://localhost:8000"
+    }
+  }
+}
