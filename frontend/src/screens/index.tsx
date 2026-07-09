@@ -68,7 +68,7 @@ const ScoreRing = ({ score }: { score: number }) => {
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 export function LoginScreen() {
   const nav = useNavigation<any>();
-  const { setAuth } = useStore();
+  const { setAuth, setProcedure } = useStore();
   const [email, setEmail] = useState('demo@dermatrace.app');
   const [password, setPassword] = useState('demo1234');
   const [loading, setLoading] = useState(false);
@@ -78,6 +78,12 @@ export function LoginScreen() {
     try {
       const res = await api.login(email, password);
       setAuth(res.user, res.token);
+      try {
+        const proc = await api.getActiveProcedure();
+        setProcedure(proc);
+      } catch {
+        // no active procedure yet — fine, user will go through setup
+      }
       nav.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (e: any) {
       Alert.alert('Login failed', e.message);
