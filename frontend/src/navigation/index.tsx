@@ -13,11 +13,26 @@ import {
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
 
-function TabIcon({ icon, label, focused }: { icon: string; label: string; focused: boolean }) {
+function TabDot({ focused }: { focused: boolean }) {
   return (
-    <View style={{ alignItems: 'center', paddingTop: 4 }}>
-      <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.45 }}>{icon}</Text>
-      <Text style={{ fontSize: 9, color: focused ? colors.sage600 : colors.gray400, marginTop: 2 }}>{label}</Text>
+    <View style={{
+      width: 6, height: 6, borderRadius: 3,
+      backgroundColor: focused ? colors.indigo : 'transparent',
+      marginBottom: 4,
+    }} />
+  );
+}
+
+function TabIcon({ label, focused }: { label: string; focused: boolean }) {
+  return (
+    <View style={{ alignItems: 'center', paddingTop: 6 }}>
+      <TabDot focused={focused} />
+      <Text style={{
+        fontSize: 10, fontWeight: focused ? '700' : '500',
+        color: focused ? colors.ink : colors.inkFaint,
+      }}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -29,23 +44,23 @@ function MainTabs() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: colors.white,
-          borderTopColor: colors.gray100,
-          borderTopWidth: 0.5,
-          height: 80,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.line,
+          borderTopWidth: 1,
+          height: 78,
         },
       }}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="🏠" label="Home" focused={focused} /> }} />
+        options={{ tabBarIcon: ({ focused }) => <TabIcon label="Home" focused={focused} /> }} />
       <Tab.Screen name="Timeline" component={TimelineScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📈" label="Timeline" focused={focused} /> }} />
+        options={{ tabBarIcon: ({ focused }) => <TabIcon label="Timeline" focused={focused} /> }} />
       <Tab.Screen name="Checkin" component={CheckinScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="📋" label="Check-in" focused={focused} /> }} />
+        options={{ tabBarIcon: ({ focused }) => <TabIcon label="Check-in" focused={focused} /> }} />
       <Tab.Screen name="Scanner" component={ScannerScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="🔍" label="Scanner" focused={focused} /> }} />
+        options={{ tabBarIcon: ({ focused }) => <TabIcon label="Scanner" focused={focused} /> }} />
       <Tab.Screen name="Alerts" component={AlertsScreen}
-        options={{ tabBarIcon: ({ focused }) => <TabIcon icon="🔔" label="Alerts" focused={focused} /> }} />
+        options={{ tabBarIcon: ({ focused }) => <TabIcon label="Alerts" focused={focused} /> }} />
     </Tab.Navigator>
   );
 }

@@ -3,31 +3,32 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator,
-  Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { colors, spacing, radius } from '../theme';
+import { colors, spacing, radius, type } from '../theme';
 import { api } from '../services/api';
 import { useStore } from '../store';
 
 // ─── Shared components ────────────────────────────────────────────────────────
 
-const Btn = ({ label, onPress, variant = 'primary', loading = false, disabled = false }: any) => (
+const Btn = ({ label, onPress, variant = 'primary', loading = false, disabled = false, style }: any) => (
   <TouchableOpacity
     onPress={onPress}
     disabled={disabled || loading}
-    activeOpacity={0.82}
+    activeOpacity={0.85}
     accessibilityRole="button"
     accessibilityLabel={label}
     style={[
       sh.btn,
       variant === 'secondary' && sh.btnSecondary,
+      variant === 'dark' && sh.btnDark,
       variant === 'danger' && sh.btnDanger,
-      (disabled || loading) && { opacity: 0.45 },
+      (disabled || loading) && { opacity: 0.4 },
+      style,
     ]}
   >
     {loading
-      ? <ActivityIndicator color={variant === 'primary' ? colors.white : colors.sage600} />
+      ? <ActivityIndicator color={variant === 'secondary' ? colors.indigo : colors.white} />
       : <Text style={[sh.btnText, variant === 'secondary' && sh.btnTextSecondary]}>{label}</Text>}
   </TouchableOpacity>
 );
@@ -37,14 +38,14 @@ const Card = ({ children, style }: any) => (
 );
 
 const Badge = ({ label, variant = 'neutral' }: any) => {
-  const bg = variant === 'success' ? '#E8F5E8'
-           : variant === 'warning' ? colors.amber50
-           : variant === 'danger'  ? colors.rose50
-           : colors.gray50;
-  const fg = variant === 'success' ? colors.sage600
-           : variant === 'warning' ? '#B87A10'
-           : variant === 'danger'  ? '#B83028'
-           : colors.gray600;
+  const bg = variant === 'success' ? colors.successSoft
+           : variant === 'warning' ? colors.warningSoft
+           : variant === 'danger'  ? colors.dangerSoft
+           : colors.indigoSoft;
+  const fg = variant === 'success' ? colors.success
+           : variant === 'warning' ? colors.warning
+           : variant === 'danger'  ? colors.danger
+           : colors.indigo;
   return (
     <View style={[sh.badge, { backgroundColor: bg }]}>
       <Text style={[sh.badgeText, { color: fg }]}>{label}</Text>
@@ -52,18 +53,14 @@ const Badge = ({ label, variant = 'neutral' }: any) => {
   );
 };
 
-const ScoreRing = ({ score }: { score: number }) => {
-  const color = score >= 70 ? colors.sage600 : score >= 45 ? colors.amber400 : colors.rose400;
-  return (
-    <View style={[sh.ring, { borderColor: color }]}
-      accessibilityRole="progressbar"
-      accessibilityValue={{ min: 0, max: 100, now: score }}
-    >
-      <Text style={[sh.ringVal, { color }]}>{score}</Text>
-      <Text style={sh.ringMax}>/100</Text>
-    </View>
-  );
-};
+// Big tight-tracked numeral used everywhere a score needs to read as
+// the single most important thing on the card — the signature motif.
+const Stat = ({ value, suffix, color = colors.onDark, size = 'lg' }: any) => (
+  <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+    <Text style={[size === 'lg' ? sh.statLg : sh.statSm, { color }]}>{value}</Text>
+    {!!suffix && <Text style={[sh.statSuffix, { color }]}>{suffix}</Text>}
+  </View>
+);
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 export function LoginScreen() {
@@ -93,9 +90,9 @@ export function LoginScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={sh.screen}>
-        <View style={{ marginBottom: spacing.xxl }}>
+        <View style={sh.heroDark}>
           <Text style={sh.logo}>DermTrace</Text>
           <Text style={sh.logoSub}>Post-procedure recovery companion</Text>
         </View>
@@ -114,7 +111,7 @@ export function LoginScreen() {
           />
           <Btn label="Log in" onPress={handleLogin} loading={loading} />
           <TouchableOpacity onPress={() => nav.navigate('Register')} style={{ marginTop: spacing.md }}>
-            <Text style={[sh.body, { textAlign: 'center', color: colors.sage600 }]}>
+            <Text style={[sh.body, { textAlign: 'center', color: colors.indigo, fontWeight: '600' }]}>
               No account? Register
             </Text>
           </TouchableOpacity>
@@ -157,12 +154,11 @@ export function RegisterScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={sh.screen}>
+        <Text style={sh.eyebrow}>STEP 1 OF 3</Text>
         <Text style={sh.title}>Create account</Text>
-        <Text style={[sh.body, { marginBottom: spacing.xl }]}>
-          Step 1 of 3 — Your login details
-        </Text>
+        <Text style={[sh.body, { marginBottom: spacing.xl }]}>Your login details</Text>
         <Card>
           <Text style={sh.label}>Email</Text>
           <TextInput
@@ -172,9 +168,9 @@ export function RegisterScreen() {
           <Text style={sh.label}>Password (min. 8 characters)</Text>
           <TextInput style={sh.input} value={password} onChangeText={setPassword} secureTextEntry />
           <View style={sh.infoBox}>
-            <Text style={sh.infoText}>🔒 GDPR-compliant. Your data is encrypted. You control deletion.</Text>
+            <Text style={sh.infoText}>GDPR-compliant. Your data is encrypted. You control deletion.</Text>
           </View>
-          <Btn label="Continue →" onPress={handleRegister} loading={loading} />
+          <Btn label="Continue" onPress={handleRegister} loading={loading} />
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -183,12 +179,12 @@ export function RegisterScreen() {
 
 // ─── PROCEDURE SETUP SCREEN ───────────────────────────────────────────────────
 const PROCEDURES = [
-  { id: 'microneedling',    label: 'Microneedling',     icon: '⬡' },
-  { id: 'rf_microneedling', label: 'RF Microneedling',  icon: '◈' },
-  { id: 'laser_resurfacing',label: 'Laser Resurfacing', icon: '◉' },
-  { id: 'chemical_peel',    label: 'Chemical Peel',     icon: '⊙' },
-  { id: 'injectables',      label: 'Injectables',       icon: '⊞' },
-  { id: 'regenerative',     label: 'Regenerative Tx',   icon: '◍' },
+  { id: 'microneedling',    label: 'Microneedling' },
+  { id: 'rf_microneedling', label: 'RF Microneedling' },
+  { id: 'laser_resurfacing',label: 'Laser Resurfacing' },
+  { id: 'chemical_peel',    label: 'Chemical Peel' },
+  { id: 'injectables',      label: 'Injectables' },
+  { id: 'regenerative',     label: 'Regenerative Tx' },
 ];
 
 export function ProcedureSetupScreen() {
@@ -214,7 +210,7 @@ export function ProcedureSetupScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={sh.screen}>
         <Text style={sh.title}>Your procedure</Text>
         <Text style={sh.body}>We'll build your personalised 30-day recovery plan.</Text>
@@ -229,8 +225,7 @@ export function ProcedureSetupScreen() {
               accessibilityRole="radio"
               accessibilityState={{ checked: selected === p.id }}
             >
-              <Text style={{ fontSize: 24, marginBottom: 4 }}>{p.icon}</Text>
-              <Text style={sh.procLabel}>{p.label}</Text>
+              <Text style={[sh.procLabel, selected === p.id && { color: colors.white }]}>{p.label}</Text>
               {selected === p.id && <View style={sh.checkDot} />}
             </TouchableOpacity>
           ))}
@@ -251,7 +246,7 @@ export function ProcedureSetupScreen() {
           placeholder="e.g. Skin & Glow München"
         />
 
-        <Btn label="Start my recovery →" onPress={handleStart} loading={loading} disabled={!selected} />
+        <Btn label="Start my recovery" onPress={handleStart} loading={loading} disabled={!selected} />
         <Text style={[sh.disclaimer, { marginTop: spacing.lg }]}>
           Not medical advice. Consult a healthcare professional.
         </Text>
@@ -291,42 +286,50 @@ export function DashboardScreen() {
   const firstName = user?.email?.split('@')[0] ?? 'there';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={sh.screen}>
         {/* Header */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xl }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg }}>
           <View>
+            <Text style={sh.eyebrow}>DAY {day} OF 30</Text>
             <Text style={sh.title}>Hello, {firstName}</Text>
-            <Text style={sh.body}>
-              {procedure?.type?.replace(/_/g, ' ') ?? 'Procedure'} · Day {day} of 30
-            </Text>
           </View>
-          <TouchableOpacity onPress={() => nav.navigate('Alerts')} accessibilityLabel="View alerts">
-            <Text style={{ fontSize: 26 }}>🔔</Text>
+          <TouchableOpacity onPress={() => nav.navigate('Alerts')} accessibilityLabel="View alerts" style={sh.bellBtn}>
+            <Text style={{ fontSize: 18 }}>●</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Score card */}
-        <Card style={{ marginBottom: spacing.xl }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ gap: spacing.sm }}>
-              <Text style={sh.cardTitle}>Recovery score</Text>
-              <Badge label={statusLabel} variant={statusVariant} />
-              <Text style={sh.caption}>Expected for Day {day}: {Math.min(100, 55 + day * 1.4).toFixed(0)}</Text>
+        {/* Dark hero stat card — the signature element */}
+        <View style={[sh.heroDark, { marginBottom: spacing.lg }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View>
+              <Text style={sh.heroLabel}>RECOVERY SCORE</Text>
+              {loading
+                ? <ActivityIndicator color={colors.onDark} style={{ marginTop: spacing.md }} />
+                : <Stat value={Math.round(barrierScore)} suffix="/100" />}
             </View>
-            {loading
-              ? <ActivityIndicator color={colors.sage600} />
-              : <ScoreRing score={barrierScore} />}
+            <Badge label={statusLabel} variant={statusVariant} />
           </View>
-        </Card>
+          <View style={sh.heroDivider} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View>
+              <Text style={sh.heroSubLabel}>PROCEDURE</Text>
+              <Text style={sh.heroSubValue}>{procedure?.type?.replace(/_/g, ' ') ?? '—'}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={sh.heroSubLabel}>EXPECTED TODAY</Text>
+              <Text style={sh.heroSubValue}>{Math.min(100, 55 + day * 1.4).toFixed(0)}/100</Text>
+            </View>
+          </View>
+        </View>
 
         {/* Actions */}
         <Text style={[sh.label, { marginBottom: spacing.sm }]}>Today's actions</Text>
 
         {[
-          { label: 'Daily check-in', sub: 'Log symptoms · ~60 sec', screen: 'Checkin', icon: '📋' },
-          { label: 'Scan a product', sub: 'Check ingredient safety', screen: 'Scanner', icon: '🔍' },
-          { label: 'Healing timeline', sub: 'Expected vs actual progress', screen: 'Timeline', icon: '📈' },
+          { label: 'Daily check-in', sub: 'Log symptoms · ~60 sec', screen: 'Checkin' },
+          { label: 'Scan a product', sub: 'Check ingredient safety', screen: 'Scanner' },
+          { label: 'Healing timeline', sub: 'Expected vs actual progress', screen: 'Timeline' },
         ].map(item => (
           <TouchableOpacity
             key={item.label}
@@ -334,12 +337,11 @@ export function DashboardScreen() {
             style={sh.actionRow}
             accessibilityRole="button"
           >
-            <Text style={{ fontSize: 22, width: 36 }}>{item.icon}</Text>
             <View style={{ flex: 1 }}>
               <Text style={sh.cardTitle}>{item.label}</Text>
               <Text style={sh.caption}>{item.sub}</Text>
             </View>
-            <Text style={{ fontSize: 20, color: colors.gray400 }}>›</Text>
+            <Text style={{ fontSize: 18, color: colors.indigo, fontWeight: '700' }}>→</Text>
           </TouchableOpacity>
         ))}
 
@@ -382,23 +384,20 @@ export function CheckinScreen() {
     const barrier = result.barrier_score;
     const v = barrier >= 70 ? 'success' : barrier >= 45 ? 'warning' : 'danger';
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
-        <ScrollView contentContainerStyle={[sh.screen, { alignItems: 'center' }]}>
-          <Text style={{ fontSize: 56, marginBottom: spacing.lg }}>
-            {barrier >= 70 ? '✅' : barrier >= 45 ? '⚠️' : '🚨'}
-          </Text>
-          <Text style={sh.title}>Check-in complete</Text>
-          <Text style={[sh.body, { marginBottom: spacing.xl }]}>Day {result.day_number} logged</Text>
-          <Card style={{ width: '100%', marginBottom: spacing.lg }}>
-            <Text style={sh.label}>Barrier score</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-              <Text style={{ fontSize: 40, fontWeight: '600' }}>{barrier}</Text>
-              <Text style={sh.body}>/100</Text>
-              <View style={{ flex: 1 }} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ScrollView contentContainerStyle={sh.screen}>
+          <Text style={sh.eyebrow}>DAY {result.day_number} LOGGED</Text>
+          <Text style={[sh.title, { marginBottom: spacing.xl }]}>Check-in complete</Text>
+
+          <View style={[sh.heroDark, { alignItems: 'flex-start' }]}>
+            <Text style={sh.heroLabel}>BARRIER SCORE</Text>
+            <Stat value={barrier} suffix="/100" />
+            <View style={{ marginTop: spacing.md }}>
               <Badge label={barrier >= 70 ? 'On track' : barrier >= 45 ? 'Monitor' : 'Seek advice'} variant={v} />
             </View>
-          </Card>
-          <Btn label="View timeline" onPress={() => nav.navigate('Timeline')} />
+          </View>
+
+          <Btn label="View timeline" onPress={() => nav.navigate('Timeline')} style={{ marginTop: spacing.xl }} />
           <Btn label="Back to home" variant="secondary" onPress={() => nav.navigate('Dashboard')} style={{ marginTop: spacing.sm }} />
           <Text style={[sh.disclaimer, { marginTop: spacing.lg }]}>Not medical advice.</Text>
         </ScrollView>
@@ -407,23 +406,22 @@ export function CheckinScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={sh.screen}>
-        <Text style={sh.title}>Daily check-in</Text>
-        <Text style={[sh.body, { marginBottom: spacing.xl }]}>How is your skin today? (~60 seconds)</Text>
+        <Text style={sh.eyebrow}>~60 SECONDS</Text>
+        <Text style={[sh.title, { marginBottom: spacing.xl }]}>Daily check-in</Text>
 
         {[
-          { key: 'redness',    label: 'Redness',    emoji: '🔴' },
-          { key: 'swelling',   label: 'Swelling',   emoji: '💧' },
-          { key: 'flaking',    label: 'Flaking',    emoji: '❄️' },
-          { key: 'discomfort', label: 'Discomfort', emoji: '😣' },
-        ].map(({ key, label, emoji }) => (
+          { key: 'redness',    label: 'Redness' },
+          { key: 'swelling',   label: 'Swelling' },
+          { key: 'flaking',    label: 'Flaking' },
+          { key: 'discomfort', label: 'Discomfort' },
+        ].map(({ key, label }) => (
           <Card key={key} style={{ marginBottom: spacing.md }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md }}>
-              <Text style={sh.cardTitle}>{emoji} {label}</Text>
-              <Text style={{ fontSize: 20, fontWeight: '600' }}>{(values as any)[key]}/10</Text>
+              <Text style={sh.cardTitle}>{label}</Text>
+              <Text style={sh.statSm}>{(values as any)[key]}<Text style={{ color: colors.inkFaint, fontWeight: '600', fontSize: 13 }}>/10</Text></Text>
             </View>
-            {/* Simple tap-to-set slider for demo */}
             <View style={{ flexDirection: 'row', gap: 4 }}>
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
                 <TouchableOpacity
@@ -431,9 +429,8 @@ export function CheckinScreen() {
                   onPress={() => set(key, n)}
                   style={{
                     flex: 1, height: 28, borderRadius: 4,
-                    backgroundColor: n <= (values as any)[key]
-                      ? (n <= 3 ? colors.sage400 : n <= 6 ? colors.amber400 : colors.rose400)
-                      : colors.gray100,
+                    backgroundColor: n <= (values as any)[key] ? colors.indigo : colors.gray100,
+                    opacity: n <= (values as any)[key] ? (0.5 + (n / 20)) : 1,
                   }}
                   accessibilityLabel={`${label} ${n}`}
                 />
@@ -443,7 +440,7 @@ export function CheckinScreen() {
         ))}
 
         <View style={sh.infoBox}>
-          <Text style={sh.infoText}>📸 Photo upload available in the full version.</Text>
+          <Text style={sh.infoText}>Photo upload available in the full version.</Text>
         </View>
 
         <Btn label="Submit check-in" onPress={submit} loading={loading} />
@@ -468,28 +465,28 @@ export function TimelineScreen() {
   }, [procedure?.id]);
 
   const PHASES = [
-    { id: 'inflammation',  label: 'Inflammation',  days: 'Days 1–5',   color: colors.rose50,   desc: 'Redness, heat, swelling — healing underway.' },
-    { id: 'proliferation', label: 'Proliferation', days: 'Days 5–14',  color: colors.amber50,  desc: 'Peeling, new cell growth, barrier rebuilding.' },
-    { id: 'remodelling',   label: 'Remodelling',   days: 'Days 14–30', color: colors.sage50,   desc: 'Collagen formation, skin texture refining.' },
+    { id: 'inflammation',  label: 'Inflammation',  days: 'Days 1–5',   desc: 'Redness, heat, swelling — healing underway.' },
+    { id: 'proliferation', label: 'Proliferation', days: 'Days 5–14',  desc: 'Peeling, new cell growth, barrier rebuilding.' },
+    { id: 'remodelling',   label: 'Remodelling',   days: 'Days 14–30', desc: 'Collagen formation, skin texture refining.' },
   ];
 
   const currentDay = timeline?.current_day ?? 1;
   const currentPhase = currentDay <= 5 ? 'inflammation' : currentDay <= 14 ? 'proliferation' : 'remodelling';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={sh.screen}>
-        <Text style={sh.title}>Healing timeline</Text>
-        <Text style={sh.body}>Day {currentDay} of 30</Text>
+        <Text style={sh.eyebrow}>DAY {currentDay} OF 30</Text>
+        <Text style={[sh.title, { marginBottom: spacing.lg }]}>Healing timeline</Text>
 
         {/* Progress bar */}
-        <Card style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}>
+        <Card style={{ marginBottom: spacing.lg }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm }}>
             <Text style={sh.cardTitle}>Recovery progress</Text>
-            <Text style={{ color: colors.sage600, fontWeight: '500' }}>{Math.round((currentDay / 30) * 100)}%</Text>
+            <Text style={{ color: colors.indigo, fontWeight: '700' }}>{Math.round((currentDay / 30) * 100)}%</Text>
           </View>
           <View style={{ height: 8, backgroundColor: colors.gray100, borderRadius: 4 }}>
-            <View style={{ width: `${(currentDay / 30) * 100}%`, height: '100%', backgroundColor: colors.sage400, borderRadius: 4 }} />
+            <View style={{ width: `${(currentDay / 30) * 100}%`, height: '100%', backgroundColor: colors.indigo, borderRadius: 4 }} />
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
             <Text style={sh.caption}>Day 1</Text>
@@ -497,36 +494,36 @@ export function TimelineScreen() {
           </View>
         </Card>
 
-        {/* Mini chart */}
+        {/* Dark stat-card bar chart — echoes the dashboard hero motif */}
         {timeline?.days && (
-          <Card style={{ marginBottom: spacing.xl }}>
-            <Text style={[sh.label, { marginBottom: spacing.md }]}>Barrier score history</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 80, gap: 2 }}>
+          <View style={[sh.heroDark, { marginBottom: spacing.lg }]}>
+            <Text style={sh.heroLabel}>BARRIER SCORE HISTORY</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', height: 90, gap: 2, marginTop: spacing.lg }}>
               {timeline.days.map((d: any) => (
                 <View key={d.day} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
                   <View style={{
                     width: '100%',
-                    height: `${Math.max(5, (d.actual_barrier ?? d.expected_barrier) * 0.8)}%`,
-                    backgroundColor: d.actual_barrier ? colors.sage400 : colors.gray200,
+                    height: `${Math.max(5, (d.actual_barrier ?? d.expected_barrier) * 0.85)}%`,
+                    backgroundColor: d.actual_barrier ? colors.indigoLight : 'rgba(255,255,255,0.14)',
                     borderRadius: 2,
                   }} />
                 </View>
               ))}
             </View>
-            <View style={{ flexDirection: 'row', gap: spacing.lg, marginTop: spacing.sm }}>
+            <View style={{ flexDirection: 'row', gap: spacing.lg, marginTop: spacing.md }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.sage400 }} />
-                <Text style={sh.caption}>Actual</Text>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.indigoLight }} />
+                <Text style={sh.heroSubLabel}>ACTUAL</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.gray200 }} />
-                <Text style={sh.caption}>Expected</Text>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.14)' }} />
+                <Text style={sh.heroSubLabel}>EXPECTED</Text>
               </View>
             </View>
-          </Card>
+          </View>
         )}
 
-        {loading && <ActivityIndicator color={colors.sage600} style={{ marginBottom: spacing.xl }} />}
+        {loading && <ActivityIndicator color={colors.indigo} style={{ marginBottom: spacing.xl }} />}
 
         {/* Phases */}
         <Text style={[sh.label, { marginBottom: spacing.md }]}>Recovery phases</Text>
@@ -534,7 +531,7 @@ export function TimelineScreen() {
           const isActive = p.id === currentPhase;
           const isPast = (p.id === 'inflammation' && currentDay > 5) || (p.id === 'proliferation' && currentDay > 14);
           return (
-            <View key={p.id} style={[sh.phaseCard, { backgroundColor: p.color }, isActive && sh.phaseCardActive]}>
+            <View key={p.id} style={[sh.phaseCard, isActive && sh.phaseCardActive]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={sh.cardTitle}>{p.label}</Text>
                 <Badge label={isPast ? 'Complete' : isActive ? 'Active' : 'Upcoming'} variant={isPast ? 'success' : isActive ? 'warning' : 'neutral'} />
@@ -577,19 +574,18 @@ export function ScannerScreen() {
     }
   }
 
-  const statusColor = result?.overall_status === 'safe' ? colors.sage600
-                    : result?.overall_status === 'caution' ? colors.amber400
-                    : colors.rose400;
-  const statusEmoji = result?.overall_status === 'safe' ? '✅' : result?.overall_status === 'caution' ? '⚠️' : '🚫';
+  const statusVariant = result?.overall_status === 'safe' ? 'success'
+                      : result?.overall_status === 'caution' ? 'warning' : 'danger';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={sh.screen}>
-        <Text style={sh.title}>Ingredient scanner</Text>
-        <Text style={sh.body}>Check if a product is safe for your current recovery stage.</Text>
+        <Text style={sh.eyebrow}>INGREDIENT SAFETY</Text>
+        <Text style={sh.title}>Scanner</Text>
+        <Text style={[sh.body, { marginBottom: spacing.lg }]}>Check if a product is safe for your current recovery stage.</Text>
 
         {/* Search by name */}
-        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl, marginBottom: spacing.lg }}>
+        <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg }}>
           <TextInput
             style={[sh.input, { flex: 1, marginBottom: 0 }]}
             value={productName}
@@ -600,9 +596,9 @@ export function ScannerScreen() {
           />
           <TouchableOpacity
             onPress={() => productName && scan(undefined, productName)}
-            style={{ backgroundColor: colors.sage600, paddingHorizontal: spacing.lg, borderRadius: radius.md, justifyContent: 'center' }}
+            style={{ backgroundColor: colors.indigo, paddingHorizontal: spacing.lg, borderRadius: radius.md, justifyContent: 'center' }}
           >
-            <Text style={{ color: colors.white, fontWeight: '600' }}>Go</Text>
+            <Text style={{ color: colors.white, fontWeight: '700' }}>Go</Text>
           </TouchableOpacity>
         </View>
 
@@ -615,21 +611,21 @@ export function ScannerScreen() {
           </TouchableOpacity>
         ))}
 
-        {loading && <ActivityIndicator color={colors.sage600} style={{ marginVertical: spacing.xl }} />}
+        {loading && <ActivityIndicator color={colors.indigo} style={{ marginVertical: spacing.xl }} />}
 
         {/* Result */}
         {result && (
           <View style={{ marginTop: spacing.xl }}>
-            <View style={[sh.resultBanner, { borderColor: statusColor, backgroundColor: `${statusColor}18` }]}>
-              <Text style={{ fontSize: 32 }}>{statusEmoji}</Text>
+            <View style={[sh.heroDark, { flexDirection: 'row', alignItems: 'center', gap: spacing.md }]}>
               <View style={{ flex: 1 }}>
-                <Text style={[sh.cardTitle, { color: statusColor }]}>
-                  {result.overall_status === 'safe' ? 'Safe for your stage'
-                   : result.overall_status === 'caution' ? 'Use with caution'
-                   : 'Avoid at this stage'}
+                <Text style={sh.heroLabel}>
+                  {result.overall_status === 'safe' ? 'SAFE FOR YOUR STAGE'
+                   : result.overall_status === 'caution' ? 'USE WITH CAUTION'
+                   : 'AVOID AT THIS STAGE'}
                 </Text>
-                <Text style={sh.body}>{result.product_name}</Text>
+                <Text style={[sh.heroSubValue, { marginTop: spacing.sm }]}>{result.product_name}</Text>
               </View>
+              <Badge label={result.overall_status} variant={statusVariant} />
             </View>
 
             {result.flagged_ingredients.length > 0 && (
@@ -646,7 +642,7 @@ export function ScannerScreen() {
                     </View>
                     <Text style={[sh.body, { marginTop: spacing.xs }]}>{f.reason}</Text>
                     {f.safe_from_day && (
-                      <Text style={[sh.caption, { marginTop: 4, color: colors.sage600 }]}>
+                      <Text style={[sh.caption, { marginTop: 4, color: colors.indigo, fontWeight: '600' }]}>
                         Safe to use from Day {f.safe_from_day}
                       </Text>
                     )}
@@ -656,8 +652,8 @@ export function ScannerScreen() {
             )}
 
             {result.flagged_ingredients.length === 0 && (
-              <Card style={{ backgroundColor: colors.sage50, marginTop: spacing.md }}>
-                <Text style={{ color: colors.sage600 }}>No concerning ingredients detected for your current stage.</Text>
+              <Card style={{ backgroundColor: colors.successSoft, marginTop: spacing.md }}>
+                <Text style={{ color: colors.success, fontWeight: '600' }}>No concerning ingredients detected for your current stage.</Text>
               </Card>
             )}
 
@@ -685,45 +681,47 @@ export function AlertsScreen() {
   }, [procedure?.id]);
 
   const isLow = !risk || risk.level === 'low';
-  const color = risk?.level === 'critical' ? colors.rose400 : risk?.level === 'high' ? colors.rose400 : colors.amber400;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={sh.screen}>
+        <Text style={sh.eyebrow}>INFORMATIONAL GUIDANCE</Text>
         <Text style={sh.title}>Recovery alerts</Text>
-        <Text style={sh.body}>Informational guidance — not medical diagnosis</Text>
 
-        {loading && <ActivityIndicator color={colors.sage600} style={{ marginTop: spacing.xl }} />}
+        {loading && <ActivityIndicator color={colors.indigo} style={{ marginTop: spacing.xl }} />}
 
         {!loading && isLow && (
-          <Card style={{ marginTop: spacing.xl, alignItems: 'center' }}>
-            <Text style={{ fontSize: 48, marginBottom: spacing.md }}>✅</Text>
-            <Text style={sh.cardTitle}>All clear</Text>
-            <Text style={[sh.body, { textAlign: 'center' }]}>
-              No alerts right now. Keep up with your daily check-ins.
+          <Card style={{ marginTop: spacing.xl, alignItems: 'center', paddingVertical: spacing.xxl }}>
+            <Badge label="All clear" variant="success" />
+            <Text style={[sh.cardTitle, { marginTop: spacing.md }]}>No alerts right now</Text>
+            <Text style={[sh.body, { textAlign: 'center', marginTop: spacing.xs }]}>
+              Keep up with your daily check-ins.
             </Text>
           </Card>
         )}
 
         {!loading && risk && !isLow && (
-          <Card style={{ marginTop: spacing.xl, borderWidth: 1.5, borderColor: color }}>
+          <View style={[sh.heroDark, { marginTop: spacing.xl }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.md }}>
-              <Text style={{ fontSize: 32 }}>{risk.level === 'critical' ? '🚨' : '⚠️'}</Text>
-              <Badge label={`Risk ${Math.round(risk.risk_score)}/100`} variant={risk.level === 'moderate' ? 'warning' : 'danger'} />
+              <Text style={sh.heroLabel}>RISK LEVEL — {risk.level.toUpperCase()}</Text>
+              <Badge label={`${Math.round(risk.risk_score)}/100`} variant={risk.level === 'moderate' ? 'warning' : 'danger'} />
             </View>
-            <Text style={[sh.cardTitle, { marginBottom: spacing.sm }]}>{risk.title}</Text>
-            <Text style={[sh.body, { marginBottom: spacing.md }]}>{risk.description}</Text>
-            <Text style={[sh.cardTitle, { marginBottom: spacing.sm }]}>Recommendation</Text>
-            <Text style={sh.body}>{risk.recommendation}</Text>
+            <Text style={[sh.heroSubValue, { fontSize: 17, marginBottom: spacing.sm }]}>{risk.title}</Text>
+            <Text style={[sh.onDarkBody, { marginBottom: spacing.lg }]}>{risk.description}</Text>
+            <View style={sh.heroDivider} />
+            <Text style={sh.heroSubLabel}>RECOMMENDATION</Text>
+            <Text style={[sh.onDarkBody, { marginTop: spacing.xs }]}>{risk.recommendation}</Text>
 
             {(risk.level === 'high' || risk.level === 'critical') && (
               <Btn label="Contact clinic" onPress={() => Alert.alert('Clinic', 'In the full version this opens your clinic contact.')} style={{ marginTop: spacing.lg }} />
             )}
+          </View>
+        )}
 
-            <Text style={[sh.disclaimer, { marginTop: spacing.lg }]}>
-              Informational guidance only. Not a medical diagnosis. Consult a qualified healthcare professional.
-            </Text>
-          </Card>
+        {!loading && risk && !isLow && (
+          <Text style={[sh.disclaimer, { marginTop: spacing.lg }]}>
+            Informational guidance only. Not a medical diagnosis. Consult a qualified healthcare professional.
+          </Text>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -739,7 +737,7 @@ export function ProfileScreen() {
     : 0;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.cream }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={sh.screen}>
         <View style={{ alignItems: 'center', marginBottom: spacing.xl }}>
           <View style={sh.avatar}>
@@ -749,25 +747,28 @@ export function ProfileScreen() {
         </View>
 
         {procedure && (
-          <Card style={{ marginBottom: spacing.xl }}>
-            <Text style={sh.label}>Active procedure</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm }}>
-              <Text style={sh.body}>{procedure.type.replace(/_/g, ' ')}</Text>
+          <View style={[sh.heroDark, { marginBottom: spacing.xl }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={sh.heroLabel}>ACTIVE PROCEDURE</Text>
               <Badge label="Active" variant="success" />
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: spacing.lg }}>
+            <Text style={[sh.heroSubValue, { fontSize: 18, marginTop: spacing.xs, textTransform: 'capitalize' }]}>
+              {procedure.type.replace(/_/g, ' ')}
+            </Text>
+            <View style={sh.heroDivider} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
               {[
                 { val: day, label: 'Current day' },
                 { val: checkins.length, label: 'Check-ins' },
                 { val: 30 - day, label: 'Days left' },
               ].map(s => (
                 <View key={s.label} style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 24, fontWeight: '600' }}>{s.val}</Text>
-                  <Text style={sh.caption}>{s.label}</Text>
+                  <Text style={sh.statSm}>{s.val}</Text>
+                  <Text style={sh.heroSubLabel}>{s.label.toUpperCase()}</Text>
                 </View>
               ))}
             </View>
-          </Card>
+          </View>
         )}
 
         <Btn label="Sign out" variant="secondary" onPress={() => {
@@ -792,37 +793,93 @@ export function ProfileScreen() {
 // ─── Shared styles ────────────────────────────────────────────────────────────
 const sh = StyleSheet.create({
   screen: { flexGrow: 1, padding: spacing.xl, paddingBottom: spacing.xxl },
-  logo: { fontSize: 36, fontWeight: '700', color: colors.sage600, textAlign: 'center' },
-  logoSub: { fontSize: 14, color: colors.gray600, textAlign: 'center', marginTop: 4 },
-  title: { fontSize: 24, fontWeight: '600', color: colors.ink, marginBottom: 4 },
-  body: { fontSize: 14, color: colors.gray600, lineHeight: 21 },
-  label: { fontSize: 11, fontWeight: '600', color: colors.gray400, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 },
-  caption: { fontSize: 11, color: colors.gray400 },
-  disclaimer: { fontSize: 11, color: colors.gray400, textAlign: 'center', lineHeight: 16 },
-  card: { backgroundColor: colors.white, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 0.5, borderColor: colors.gray100, marginBottom: spacing.sm, shadowColor: colors.ink, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  cardTitle: { fontSize: 14, fontWeight: '500', color: colors.ink },
-  btn: { height: 52, backgroundColor: colors.sage600, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  btnSecondary: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.sage600 },
-  btnDanger: { backgroundColor: colors.rose400 },
-  btnText: { color: colors.white, fontWeight: '600', fontSize: 15 },
-  btnTextSecondary: { color: colors.sage600 },
-  input: { height: 52, borderRadius: radius.md, borderWidth: 1, borderColor: colors.gray200, paddingHorizontal: spacing.lg, fontSize: 15, color: colors.ink, backgroundColor: colors.white, marginBottom: spacing.md },
-  badge: { paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.full, alignSelf: 'flex-start' },
-  badgeText: { fontSize: 10, fontWeight: '600' },
-  ring: { width: 80, height: 80, borderRadius: 40, borderWidth: 4, alignItems: 'center', justifyContent: 'center' },
-  ringVal: { fontSize: 22, fontWeight: '600' },
-  ringMax: { fontSize: 10, color: colors.gray400 },
-  actionRow: { backgroundColor: colors.white, borderRadius: radius.lg, padding: spacing.lg, borderWidth: 0.5, borderColor: colors.gray100, flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm, gap: spacing.md },
-  procCard: { width: '47%', borderRadius: radius.lg, padding: spacing.md, borderWidth: 1.5, borderColor: 'transparent', backgroundColor: colors.gray50, alignItems: 'center', position: 'relative' },
-  procCardActive: { borderColor: colors.sage600, backgroundColor: colors.sage50 },
-  procLabel: { fontSize: 12, fontWeight: '500', textAlign: 'center', color: colors.ink },
-  checkDot: { position: 'absolute', top: 8, right: 8, width: 16, height: 16, borderRadius: 8, backgroundColor: colors.sage600 },
-  phaseCard: { borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.sm, borderWidth: 1.5, borderColor: 'transparent' },
-  phaseCardActive: { borderColor: colors.sage600 },
-  infoBox: { backgroundColor: colors.blue50, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
-  infoText: { fontSize: 12, color: colors.blue600, lineHeight: 18 },
-  resultBanner: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 1.5, borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.lg },
-  demoBtn: { backgroundColor: colors.white, borderRadius: radius.md, padding: spacing.md, borderWidth: 0.5, borderColor: colors.gray200, marginBottom: spacing.sm },
-  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.sage100, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontSize: 28, fontWeight: '600', color: colors.sage600 },
+
+  // Dark hero "signature" card — carries one big stat, reused across screens
+  heroDark: {
+    backgroundColor: colors.navy900,
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    marginBottom: spacing.lg,
+  },
+  heroLabel: { ...type.label, color: colors.onDarkMuted },
+  heroSubLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6, color: colors.onDarkMuted },
+  heroSubValue: { fontSize: 14, fontWeight: '700', color: colors.onDark, marginTop: 2 },
+  heroDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginVertical: spacing.lg },
+  onDarkBody: { fontSize: 13, color: colors.onDarkMuted, lineHeight: 19 },
+
+  statLg: { ...type.stat, marginTop: 6 },
+  statSm: { fontSize: 20, fontWeight: '800', letterSpacing: -0.4, color: colors.ink },
+  statSuffix: { fontSize: 14, fontWeight: '600', marginLeft: 4, marginBottom: 5, opacity: 0.6 },
+
+  logo: { fontSize: 30, fontWeight: '800', color: colors.onDark, letterSpacing: -0.6 },
+  logoSub: { fontSize: 13, color: colors.onDarkMuted, marginTop: 4 },
+
+  eyebrow: { ...type.label, color: colors.indigo, marginBottom: 4 },
+  title: { ...type.h1, color: colors.ink, marginBottom: 4 },
+  body: { fontSize: 14, color: colors.inkMuted, lineHeight: 21 },
+  label: { ...type.label, color: colors.inkFaint, textTransform: 'uppercase', marginBottom: 6 },
+  caption: { fontSize: 11, color: colors.inkFaint },
+  disclaimer: { fontSize: 11, color: colors.inkFaint, textAlign: 'center', lineHeight: 16 },
+
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    marginBottom: spacing.sm,
+  },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: colors.ink },
+
+  btn: { height: 52, backgroundColor: colors.indigo, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  btnSecondary: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.indigo },
+  btnDark: { backgroundColor: colors.navy900 },
+  btnDanger: { backgroundColor: colors.danger },
+  btnText: { color: colors.white, fontWeight: '700', fontSize: 15 },
+  btnTextSecondary: { color: colors.indigo },
+
+  input: {
+    height: 52, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line,
+    paddingHorizontal: spacing.lg, fontSize: 15, color: colors.ink,
+    backgroundColor: colors.surface, marginBottom: spacing.md,
+  },
+
+  badge: { paddingHorizontal: spacing.md, paddingVertical: 5, borderRadius: radius.full, alignSelf: 'flex-start' },
+  badgeText: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
+
+  bellBtn: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.line,
+  },
+
+  actionRow: {
+    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg,
+    borderWidth: 1, borderColor: colors.line, flexDirection: 'row', alignItems: 'center',
+    marginBottom: spacing.sm, gap: spacing.md,
+  },
+
+  procCard: {
+    width: '47%', borderRadius: radius.md, padding: spacing.md, borderWidth: 1.5,
+    borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', position: 'relative',
+  },
+  procCardActive: { borderColor: colors.indigo, backgroundColor: colors.navy900 },
+  procLabel: { fontSize: 12, fontWeight: '700', textAlign: 'center', color: colors.ink },
+  checkDot: { position: 'absolute', top: 8, right: 8, width: 14, height: 14, borderRadius: 7, backgroundColor: colors.indigoLight },
+
+  phaseCard: {
+    borderRadius: radius.lg, padding: spacing.lg, marginBottom: spacing.sm,
+    borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.surface,
+  },
+  phaseCardActive: { borderColor: colors.indigo, backgroundColor: colors.indigoSoft },
+
+  infoBox: { backgroundColor: colors.indigoSoft, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
+  infoText: { fontSize: 12, color: colors.indigoDeep, lineHeight: 18, fontWeight: '500' },
+
+  demoBtn: {
+    backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md,
+    borderWidth: 1, borderColor: colors.line, marginBottom: spacing.sm,
+  },
+
+  avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.navy900, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 26, fontWeight: '800', color: colors.onDark },
 });
